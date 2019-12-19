@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge,chrome=1">
-  <link rel="stylesheet" href="./assets/css/reboot.css">
-  <link rel="stylesheet" href="./assets/css/reset.css">
-  <link rel="stylesheet" href="./assets/lib/css/animate.css">
-  <link rel="stylesheet" href="./assets/lib/css/swiper.min.css">
-  <link rel="stylesheet" href="./assets/css/main.css">
-  <script src="./lib/require.min.js"></script>
+  <link rel="stylesheet" href="./css/reboot.css">
+  <link rel="stylesheet" href="./css/reset.css">
+  <link rel="stylesheet" href="./css/lib/animate.css">
+  <link rel="stylesheet" href="./css/lib/swiper.min.css">
+  <link rel="stylesheet" href="./css/main.css">
+  <script src="./js/lib/require.min.js"></script>
   <script>
     require.config({
       baseUrl: '/js',
+      urlArgs: 'v1.1',
       paths: {
         swiper: 'lib/swiper.min',
         jquery: 'lib/jquery-1.11.3.min',
@@ -104,8 +105,8 @@
     </section>
   </main>
   <!-- <script src="./js/lib/zepto.min.js"></script> -->
-  <script src="./js/lib/jquery-1.11.3.min.js"></script>
-  <script src="./js/lib/swiper.min.js"></script>
-  <script src="./js/main.js"></script>
+  <script>
+    require(['main'])
+  </script>
 </body>
 </html>
