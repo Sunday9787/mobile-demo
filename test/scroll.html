@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge,chrome=1">
+  <title>Document</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      list-style: none;
+    }
+
+    #container > li {
+      height: 100px;
+    }
+
+    #container > li:nth-of-type(1) {
+      background-color: aliceblue;
+    }
+
+    #container > li:nth-of-type(2) {
+      background-color: antiquewhite;
+    }
+
+    #container > li:nth-of-type(3) {
+      background-color: gold;
+    }
+
+    #container > li:nth-of-type(4) {
+      background-color: rebeccapurple;
+    }
+
+    #container > li:nth-of-type(5) {
+      background-color: blueviolet;
+    }
+
+    #container > li:nth-of-type(6) {
+      background-color: cadetblue;
+    }
+
+    #container > li:nth-of-type(7) {
+      background-color: cornflowerblue;
+    }
+
+    #container > li:nth-of-type(8) {
+      background-color: darkcyan;
+    }
+
+    #container > li:nth-of-type(9) {
+      background-color: darkorange;
+    }
+
+    #container > li:nth-of-type(10) {
+      background-color: teal;
+    }
+  </style>
+</head>
+<body>
+  <ul id="container">
+    <li>1</li>
+    <li>2</li>
+    <li>3</li>
+    <li>4</li>
+    <li>5</li>
+    <li>6</li>
+    <li>7</li>
+    <li>8</li>
+    <li>9</li>
+    <li>10</li>
+  </ul>
+  <script>
+    var lis = Array.prototype.slice.call(document.getElementById('container').children, 0);
+    var clientHeight = document.documentElement.clientHeight;
+
+    document.addEventListener('scroll', function () {
+      console.log(lis.map(el => el.getBoundingClientRect().top));
+      console.log(lis.map(el => el.getBoundingClientRect().bottom));
+
+      lis.forEach(el => {
+        /**
+         * element.getBoundingClientRect().bottom < 0 即 在可视区上面 且 完全不在可视区范围内
+         * element.getBoundingClientRect().top > clientHeight 即 在可视区下面 且 完全不在可视区范围内
+         *
+         * element.getBoundingClientRect().top >= 0 【说明原素上面部分】 在可视区的下面 （可能进入可视区或者没有）
+         * element.getBoundingClientRect().top <= clientHeight 【说明原素上面部分】 在可视区下面
+         * element.getBoundingClientRect().top >= 0 && element.getBoundingClientRect().top <= clientHeight 两个条件 限定 原素top >= 0 且 top 在可视区范围内
+         *
+         * element.getBoundingClientRect().bottom <= 0 【说明原素上面部分】在可视区下面 (可能进入可视区或者没有)
+         * element.getBoundingClientRect().bottom >= 0 【说明原素下面部分】在可视区上面 (可能进入可视区或者没有) 因为bottom > 0
+         * element.getBoundingClientRect().top <= 0 && element.getBoundingClientRect().bottom >= 0 两个条件 限定 原素 top <= 0 且 bottom >= 0 在可视区范围内
+         */
+        if (el.getBoundingClientRect().top >= 0 && el.getBoundingClientRect().top <= clientHeight) {
+          if (el.getBoundingClientRect().bottom <= clientHeight || el.getBoundingClientRect().bottom >= clientHeight) {
+            console.log(el)
+            el.style.borderColor = 'blue';
+            el.style.borderStyle = 'solid';
+            el.style.borderWidth = '1px';
+          } else {
+            el.style.borderWidth = '0px';
+          }
+        } else if (el.getBoundingClientRect().top <= 0 && el.getBoundingClientRect().bottom >= 0) {
+          if (el.getBoundingClientRect().bottom <= clientHeight || el.getBoundingClientRect().bottom >= clientHeight) {
+            console.log(el)
+            el.style.borderColor = 'red';
+            el.style.borderStyle = 'solid';
+            el.style.borderWidth = '1px';
+          } else {
+            el.style.borderWidth = '0px';
+          }
+        } else {
+          el.style.borderWidth = '0px';
+        }
+      });
+    })
+  </script>
+</body>
+</html>
