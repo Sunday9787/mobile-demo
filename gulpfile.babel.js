@@ -11,6 +11,8 @@ import sourceMaps from 'gulp-sourcemaps'
 import autoprefixer from 'gulp-autoprefixer'
 /** 重命名 */
 import rename from 'gulp-rename'
+import rev from 'gulp-rev'
+import revCollector from 'gulp-rev-collector'
 import path from 'path'
 
 
@@ -33,6 +35,53 @@ gulp.task('CompileSCSS', () => {
   .pipe(autoprefixer())
   .pipe(sourceMaps.write('.'))
   .pipe(gulp.dest(`${buildPath}/css`))
+})
+
+gulp.task('AddCSSrev', () => {
+  return gulp.src([
+    `${buildPath}/css/**/*.css`,
+  ])
+  .pipe(rev())
+  .pipe(rev.manifest())
+  .pipe(gulp.dest(`${buildPath}/css`))
+})
+
+gulp.task('AddJSrev', () => {
+  return gulp.src([
+    `${buildPath}/js/**/*.js`,
+  ])
+  .pipe(rev())
+  .pipe(rev.manifest())
+  .pipe(gulp.dest(`${buildPath}/js`))
+})
+
+/**
+ * 添加版本号
+ * @param {string} patch 
+ */
+function version(patch) {
+  return (manifest_value) => {
+    const result = manifest_value.match(/([^-]+)-(\w+)(.+)/);
+    const fileNamePatch = result[1];
+    const ver = result[2];
+    const ext = result[3];
+    return `${patch}/${fileNamePatch}${ext}?v=${ver}`
+  }
+}
+
+gulp.task('AddHTMLrev', () => {
+  return gulp.src([
+    `${buildPath}/**/*.json`,
+    `${basePath}/**/*.html`,
+  ])
+  .pipe(revCollector({
+    replaceReved: true,
+    dirReplacements: {
+      './css': version('/css'),
+      './js': version('/js')
+    },
+  }))
+  .pipe(gulp.dest(`${buildPath}`));
 })
 
 gulp.task('CompileTS', () => {
