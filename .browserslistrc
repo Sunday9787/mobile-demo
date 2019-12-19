@@ -1,0 +1,9 @@
+[production]
+> 1%
+last 2 versions
+ie >= 8
+ios >= 8
+android >= 4.0
+
+[development]
+last 1 chrome version

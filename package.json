@@ -1,0 +1,24 @@
+{
+  "name": "mobile-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "gulp:dev": "NODE_ENV=development gulp",
+    "gulp:prod": "NODE_ENV=production gulp",
+    "start": "anywhere -d ./dist/ -f /index.html -p 8000"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/preset-env": "^7.7.6",
+    "@babel/register": "^7.7.4",
+    "@types/jquery": "^3.3.31",
+    "@types/swiper": "^5.2.0",
+    "anywhere": "^1.5.0",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-sass": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5",
+    "typescript": "^3.7.3"
+  }
+}
