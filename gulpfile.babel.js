@@ -5,13 +5,17 @@ import rolluptypescript2 from 'rollup-plugin-typescript2'
 import rollupEach from 'gulp-rollup-each'
 /** sass 编译 */
 import sass from 'gulp-sass'
+/** 编译es6 */
+import babel from 'gulp-babel'
 /** sourceMaps */
 import sourceMaps from 'gulp-sourcemaps'
 /** css 前缀补全 */
 import autoprefixer from 'gulp-autoprefixer'
 /** 重命名 */
 import rename from 'gulp-rename'
+/** 生成哈希值 */
 import rev from 'gulp-rev'
+/** 更新静态引用资源哈希值 */
 import revCollector from 'gulp-rev-collector'
 import path from 'path'
 
@@ -23,6 +27,20 @@ const tmpPath = path.join(__dirname, '.tmp')
 /** 最终输出目录 */
 const buildPath = path.join(__dirname, 'dist')
 
+/**
+ * 添加版本号
+ * @param {string} patch
+ * @returns {(manifest_value: string) => string}
+ */
+function version(patch) {
+  return (manifest_value) => {
+    const result = manifest_value.match(/([^-]+)-(\w+)(.+)/);
+    const fileNamePatch = result[1];
+    const ver = result[2];
+    const ext = result[3];
+    return `${patch}/${fileNamePatch}${ext}?v=${ver}`
+  }
+}
 
 /** 编译 scss */
 gulp.task('CompileSCSS', () => {
@@ -37,7 +55,8 @@ gulp.task('CompileSCSS', () => {
   .pipe(gulp.dest(`${buildPath}/css`))
 })
 
-gulp.task('AddCSSrev', () => {
+/** CSS 添加hash值 rev-manifest */
+gulp.task('CssHash', () => {
   return gulp.src([
     `${buildPath}/css/**/*.css`,
   ])
@@ -46,7 +65,8 @@ gulp.task('AddCSSrev', () => {
   .pipe(gulp.dest(`${buildPath}/css`))
 })
 
-gulp.task('AddJSrev', () => {
+/** JS 添加hash值 rev-manifest */
+gulp.task('JsHash', () => {
   return gulp.src([
     `${buildPath}/js/**/*.js`,
   ])
@@ -55,21 +75,8 @@ gulp.task('AddJSrev', () => {
   .pipe(gulp.dest(`${buildPath}/js`))
 })
 
-/**
- * 添加版本号
- * @param {string} patch 
- */
-function version(patch) {
-  return (manifest_value) => {
-    const result = manifest_value.match(/([^-]+)-(\w+)(.+)/);
-    const fileNamePatch = result[1];
-    const ver = result[2];
-    const ext = result[3];
-    return `${patch}/${fileNamePatch}${ext}?v=${ver}`
-  }
-}
-
-gulp.task('AddHTMLrev', () => {
+/** 更新静态引用资源哈希值 */
+gulp.task('AssetsVersion', () => {
   return gulp.src([
     `${buildPath}/**/*.json`,
     `${basePath}/**/*.html`,
@@ -84,6 +91,15 @@ gulp.task('AddHTMLrev', () => {
   .pipe(gulp.dest(`${buildPath}`));
 })
 
+/** 自动化更新静态引用资源哈希值 */
+gulp.task('UpdateVersion', gulp.series(
+  gulp.parallel([
+    'CssHash',
+    'JsHash'
+  ]),
+  'AssetsVersion',
+))
+
 gulp.task('CompileTS', () => {
   return gulp.src([
     `${basePath}/ts/**/*.ts`
@@ -91,7 +107,7 @@ gulp.task('CompileTS', () => {
   .pipe(sourceMaps.init())
   .pipe(rollupEach({
     output: {
-      format: 'amd'
+      format: 'umd'
     },
     plugins: [
       rolluptypescript2({
@@ -124,10 +140,26 @@ gulp.task('watch', () => {
   ], gulp.series(['CompileSCSS', 'CompileTS']))
 })
 
-gulp.task('default', gulp.parallel([
-  'CompileSCSS',
-  'CompileTS',
-  'MoveJSlib',
-  'MoveCSSlib',
+gulp.task('CompileES6', () => {
+  return gulp.src([
+    `${basePath}/js/**/*.esm.js`,
+  ])
+  .pipe(sourceMaps.init())
+  .pipe(babel({
+    presets: [['@babel/env', { modules: 'umd' }]],
+  }))
+  .pipe(rename({ extname: '.js' }))
+  .pipe(sourceMaps.write('.'))
+  .pipe(gulp.dest(`${tmpPath}/js`))
+})
+
+gulp.task('default', gulp.series([
+  gulp.parallel([
+    'CompileSCSS',
+    'CompileTS',
+    'MoveJSlib',
+    'MoveCSSlib',
+  ]),
+  'UpdateVersion',
 ]))
 // gulp.watch([])
