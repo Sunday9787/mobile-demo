@@ -5,8 +5,14 @@ import rolluptypescript2 from 'rollup-plugin-typescript2'
 import rollupEach from 'gulp-rollup-each'
 /** sass 编译 */
 import sass from 'gulp-sass'
+/** 压缩js */
+import uglify from 'gulp-uglify'
 /** 编译es6 */
-import babel from 'gulp-babel'
+import rollupBabel from 'rollup-plugin-babel'
+/** 从 node_modules 加载模块 */
+import rollupPluginNodeResolve from 'rollup-plugin-node-resolve'
+/** 加载 CommonJS 模块 */
+import rollupResolveCommonjs from 'rollup-plugin-commonjs'
 /** sourceMaps */
 import sourceMaps from 'gulp-sourcemaps'
 /** css 前缀补全 */
@@ -27,6 +33,12 @@ const tmpPath = path.join(__dirname, '.tmp')
 /** 最终输出目录 */
 const buildPath = path.join(__dirname, 'dist')
 
+const CF = {
+  get urlAssets() {
+    return process.env.NODE_ENV === 'production' ? 'http://172.16.10.152:8000/' : '/'
+  }
+}
+
 /**
  * 添加版本号
  * @param {string} patch
@@ -40,6 +52,13 @@ function version(patch) {
     const ext = result[3];
     return `${patch}/${fileNamePatch}${ext}?v=${ver}`
   }
+}
+
+/**
+ * @param {import('gulp-rename').ParsedPath} path
+ */
+function removeEsmName(path) {
+  path.basename = path.basename.replace('.esm', '')
 }
 
 /** 编译 scss */
@@ -84,8 +103,8 @@ gulp.task('AssetsVersion', () => {
   .pipe(revCollector({
     replaceReved: true,
     dirReplacements: {
-      './css': version('/css'),
-      './js': version('/js')
+      './css': version(CF.urlAssets + 'css'),
+      './js': version(CF.urlAssets + 'js')
     },
   }))
   .pipe(gulp.dest(`${buildPath}`));
@@ -107,8 +126,13 @@ gulp.task('CompileTS', () => {
   .pipe(sourceMaps.init())
   .pipe(rollupEach({
     output: {
-      format: 'umd'
+      format: 'iife',
+      globals: {
+        jQuery: '$',
+        Swiper: 'Swiper'
+      },
     },
+    external: ['jQuery', 'Swiper'],
     plugins: [
       rolluptypescript2({
         tsconfig: `${basePath}/tsconfig.json`,
@@ -116,9 +140,8 @@ gulp.task('CompileTS', () => {
       })
     ],
   }))
-  .pipe(rename((opts) => {
-    opts.extname = '.js';
-  }))
+  .pipe(uglify())
+  .pipe(rename({ extname: '.js', suffix: '.min' }))
   .pipe(sourceMaps.write('.'))
   .pipe(gulp.dest(`${buildPath}/js`))
 })
@@ -140,15 +163,59 @@ gulp.task('watch', () => {
   ], gulp.series(['CompileSCSS', 'CompileTS']))
 })
 
+gulp.task('buildCoreJS', () => {
+  return gulp.src([
+    `${basePath}/js/core-js3.esm.js`,
+  ])
+  .pipe(sourceMaps.init())
+  .pipe(rollupEach({
+    output: {
+      format: 'iife',
+    },
+    plugins: [
+      rollupPluginNodeResolve({
+        mainFields: 'main',
+      }),
+      rollupResolveCommonjs({
+        include: 'node_modules/**',
+      }),
+    ],
+  }))
+  .pipe(rename(removeEsmName))
+  .pipe(sourceMaps.write('.'))
+  .pipe(gulp.dest(`${tmpPath}/js`))
+})
+
 gulp.task('CompileES6', () => {
   return gulp.src([
     `${basePath}/js/**/*.esm.js`,
+    `!${basePath}/js/core-js3.esm.js`,
   ])
   .pipe(sourceMaps.init())
-  .pipe(babel({
-    presets: [['@babel/env', { modules: 'umd' }]],
+  .pipe(rollupEach({
+    output: {
+      format: 'iife',
+      globals: {
+        jQuery: '$',
+        Swiper: 'Swiper'
+      },
+    },
+    external: ['jQuery', 'Swiper'],
+    plugins: [
+      rollupBabel({
+        presets: [
+          [
+            '@babel/env', {
+              modules: false,
+              useBuiltIns: 'entry',
+              corejs: 3
+            }
+          ]
+        ],
+      }),
+    ]
   }))
-  .pipe(rename({ extname: '.js' }))
+  .pipe(rename(removeEsmName))
   .pipe(sourceMaps.write('.'))
   .pipe(gulp.dest(`${tmpPath}/js`))
 })

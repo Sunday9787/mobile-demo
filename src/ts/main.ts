@@ -1,5 +1,5 @@
-import Swiper from "swiper";
-import $ from "jquery";
+import Swiper from "Swiper";
+import $ from "jQuery";
 import { filterInClientView } from '../tools/viewport';
 
 {
